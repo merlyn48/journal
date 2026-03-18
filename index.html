@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Folio — A Living Journal</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=IM+Fell+English:ital@0;1&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --ink: #1a1209;
+    --ink-light: #3d2f1a;
+    --parchment: #f5edd8;
+    --parchment-dark: #e8d9bb;
+    --parchment-deep: #d4c09a;
+    --cream: #faf6ec;
+    --gold: #c9922a;
+    --gold-light: #e8b84b;
+    --rust: #8b3a1a;
+    --sage: #4a5c45;
+    --shadow: rgba(26,18,9,0.18);
+    --page-shadow: rgba(26,18,9,0.35);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Cormorant Garamond', serif;
+    background: var(--parchment);
+    color: var(--ink);
+    overflow-x: hidden;
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='3' fill='%23c9922a'/%3E%3C/svg%3E") 10 10, auto;
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 3rem;
+    background: linear-gradient(to bottom, rgba(245,237,216,0.97), rgba(245,237,216,0));
+    backdrop-filter: blur(2px);
+  }
+
+  .nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 1.6rem;
+    color: var(--ink);
+    letter-spacing: 0.02em;
+  }
+  .nav-logo span { color: var(--gold); }
+
+  .nav-links { display: flex; gap: 2.2rem; list-style: none; }
+  .nav-links a {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.9rem;
+    font-weight: 400;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-light);
+    text-decoration: none;
+    transition: color 0.3s;
+    position: relative;
+  }
+  .nav-links a::after {
+    content: '';
+    position: absolute; bottom: -3px; left: 0; right: 0;
+    height: 1px; background: var(--gold);
+    transform: scaleX(0); transform-origin: left;
+    transition: transform 0.3s ease;
+  }
+  .nav-links a:hover { color: var(--gold); }
+  .nav-links a:hover::after { transform: scaleX(1); }
+
+  /* ─── SECTIONS ─── */
+  section {
+    min-height: 100vh;
+    padding: 0;
+    display: none;
+  }
+  section.active { display: block; }
+
+  /* ─── HOMEPAGE / BOOK ─── */
+  #home {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: var(--cream);
+    position: relative;
+    overflow: hidden;
+  }
+  #home.active { display: flex; }
+
+  .bg-texture {
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(201,146,42,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(139,58,26,0.06) 0%, transparent 50%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+
+  /* decorative lines */
+  .deco-lines {
+    position: absolute; inset: 0; pointer-events: none;
+    overflow: hidden;
+  }
+  .deco-lines::before {
+    content: '';
+    position: absolute;
+    top: 15%; left: 5%; right: 5%;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--parchment-deep), transparent);
+    opacity: 0.6;
+  }
+  .deco-lines::after {
+    content: '';
+    position: absolute;
+    bottom: 15%; left: 5%; right: 5%;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--parchment-deep), transparent);
+    opacity: 0.6;
+  }
+
+  .book-scene {
+    perspective: 1800px;
+    perspective-origin: 50% 45%;
+    width: 640px; height: 420px;
+    position: relative;
+  }
+
+  .book {
+    width: 100%; height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    animation: bookFloat 5s ease-in-out infinite;
+  }
+
+  @keyframes bookFloat {
+    0%, 100% { transform: rotateX(4deg) rotateY(-4deg) rotateZ(0.5deg); }
+    50% { transform: rotateX(6deg) rotateY(-2deg) rotateZ(-0.5deg); }
+  }
+
+  .book-cover-back {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, #2a1a08 0%, #1a0d04 100%);
+    border-radius: 2px 12px 12px 2px;
+    transform: translateZ(-8px);
+    box-shadow: -20px 20px 60px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.3);
+  }
+
+  .book-spine {
+    position: absolute;
+    left: -22px; top: 0; bottom: 0; width: 22px;
+    background: linear-gradient(to right, #150a02, #2e1a06, #1a0d04);
+    border-radius: 4px 0 0 4px;
+    transform: rotateY(-90deg) translateZ(11px);
+    transform-origin: right center;
+    box-shadow: -8px 0 20px rgba(0,0,0,0.4);
+  }
+
+  .book-pages-stack {
+    position: absolute;
+    right: -6px; top: 3px; bottom: 3px; width: 10px;
+    background: repeating-linear-gradient(
+      to bottom,
+      #f5edd8 0px, #f5edd8 2px,
+      #e8d9bb 2px, #e8d9bb 3px
+    );
+    border-radius: 0 2px 2px 0;
+    transform: translateZ(-3px);
+  }
+
+  .book-cover {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, #2e1a06 0%, #1e0e03 50%, #2a1505 100%);
+    border-radius: 2px 10px 10px 2px;
+    transform: translateZ(4px);
+    overflow: hidden;
+    box-shadow: 4px 4px 20px rgba(0,0,0,0.3);
+  }
+
+  .cover-border {
+    position: absolute;
+    inset: 12px;
+    border: 1px solid rgba(201,146,42,0.5);
+    border-radius: 2px;
+    pointer-events: none;
+  }
+  .cover-border::before {
+    content: '';
+    position: absolute;
+    inset: 5px;
+    border: 1px solid rgba(201,146,42,0.2);
+    border-radius: 1px;
+  }
+
+  .cover-title {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: var(--gold-light);
+  }
+  .cover-title h1 {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 3.8rem;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    text-shadow: 0 2px 20px rgba(232,184,75,0.3);
+  }
+  .cover-title p {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-top: 0.6rem;
+    opacity: 0.7;
+  }
+
+  /* corner ornaments */
+  .cover-ornament {
+    position: absolute;
+    width: 28px; height: 28px;
+    opacity: 0.45;
+  }
+  .cover-ornament.tl { top: 20px; left: 24px; }
+  .cover-ornament.tr { top: 20px; right: 20px; transform: scaleX(-1); }
+  .cover-ornament.bl { bottom: 20px; left: 24px; transform: scaleY(-1); }
+  .cover-ornament.br { bottom: 20px; right: 20px; transform: scale(-1); }
+
+  /* LEFT page */
+  .left-page {
+    position: absolute;
+    left: -300px; top: 10px; bottom: 10px; width: 290px;
+    background: linear-gradient(to right, #f0e6ca, #f7eed5);
+    border-radius: 4px 0 0 4px;
+    transform: translateZ(3px);
+    box-shadow: -10px 5px 30px rgba(0,0,0,0.2), inset -3px 0 8px rgba(0,0,0,0.08);
+    overflow: hidden;
+    padding: 28px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transform: rotateY(3deg);
+    transform-origin: right center;
+    animation: pageBreath 6s ease-in-out infinite;
+  }
+
+  @keyframes pageBreath {
+    0%, 100% { transform: rotateY(3deg); }
+    50% { transform: rotateY(2deg); }
+  }
+
+  .page-rule { width: 100%; height: 1px; background: rgba(139,58,26,0.15); }
+  .page-line {
+    width: 100%; height: 12px;
+    background: rgba(74,92,69,0.12);
+    border-radius: 1px;
+  }
+  .page-line.short { width: 72%; }
+  .page-line.shorter { width: 45%; }
+  .page-number-left {
+    margin-top: auto;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 0.75rem;
+    color: rgba(139,58,26,0.5);
+    text-align: left;
+  }
+
+  .right-page {
+    position: absolute;
+    right: -300px; top: 10px; bottom: 10px; width: 290px;
+    background: linear-gradient(to left, #f0e6ca, #f7eed5);
+    border-radius: 0 4px 4px 0;
+    transform: translateZ(3px);
+    box-shadow: 10px 5px 30px rgba(0,0,0,0.2), inset 3px 0 8px rgba(0,0,0,0.08);
+    overflow: hidden;
+    padding: 28px 24px;
+    display: flex; flex-direction: column; gap: 14px;
+    transform: rotateY(-3deg);
+    transform-origin: left center;
+    animation: pageBreathR 6s ease-in-out infinite;
+  }
+  @keyframes pageBreathR {
+    0%, 100% { transform: rotateY(-3deg); }
+    50% { transform: rotateY(-2deg); }
+  }
+  .page-number-right {
+    margin-top: auto;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 0.75rem;
+    color: rgba(139,58,26,0.5);
+    text-align: right;
+  }
+
+  /* ink drops */
+  .ink-drop {
+    position: absolute; border-radius: 50%;
+    background: rgba(26,18,9,0.06);
+    pointer-events: none;
+    animation: inkSpread 0.8s ease-out forwards;
+  }
+  @keyframes inkSpread {
+    from { transform: scale(0); opacity: 1; }
+    to { transform: scale(1); opacity: 0; }
+  }
+
+  /* enter button */
+  .enter-btn-wrap {
+    position: absolute;
+    bottom: -90px; left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    text-align: center;
+  }
+  .enter-btn {
+    display: inline-block;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    border: 1px solid var(--gold);
+    padding: 0.7rem 2.5rem;
+    text-decoration: none;
+    cursor: pointer;
+    background: transparent;
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .enter-btn::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: var(--gold);
+    transform: translateX(-101%);
+    transition: transform 0.4s ease;
+    z-index: -1;
+  }
+  .enter-btn:hover { color: var(--ink); }
+  .enter-btn:hover::before { transform: translateX(0); }
+  .enter-tagline {
+    margin-top: 12px;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 0.9rem;
+    color: var(--ink-light);
+    opacity: 0.6;
+  }
+
+  /* ─── INNER PAGES SHARED ─── */
+  .page-header {
+    padding: 7rem 4rem 3rem;
+    border-bottom: 1px solid var(--parchment-deep);
+    position: relative;
+  }
+  .page-header::before {
+    content: attr(data-chapter);
+    position: absolute;
+    top: 5rem; right: 4rem;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 0.8rem;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    opacity: 0.7;
+    text-transform: uppercase;
+  }
+  .page-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 3.5rem;
+    font-weight: 400;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+  .page-header p {
+    margin-top: 0.7rem;
+    font-size: 1.05rem;
+    color: var(--ink-light);
+    opacity: 0.7;
+    font-style: italic;
+    max-width: 480px;
+  }
+  .header-rule {
+    margin-top: 1.5rem;
+    width: 80px; height: 1px;
+    background: linear-gradient(to right, var(--gold), transparent);
+  }
+
+  /* ─── INK ROOM ─── */
+  #inkroom { background: var(--cream); }
+
+  .entries-grid {
+    padding: 3rem 4rem 6rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 2.5rem;
+  }
+
+  .entry-card {
+    background: var(--parchment);
+    border: 1px solid var(--parchment-deep);
+    padding: 2rem 2.2rem 1.5rem;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+    overflow: hidden;
+  }
+  .entry-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: linear-gradient(to bottom, var(--gold), var(--rust));
+    transform: scaleY(0); transform-origin: bottom;
+    transition: transform 0.4s ease;
+  }
+  .entry-card:hover { transform: translateY(-4px); box-shadow: 0 20px 50px var(--shadow); }
+  .entry-card:hover::before { transform: scaleY(1); }
+
+  .entry-date {
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.8rem;
+  }
+  .entry-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 400;
+    font-style: italic;
+    line-height: 1.2;
+    margin-bottom: 0.8rem;
+  }
+  .entry-body {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: var(--ink-light);
+    opacity: 0.85;
+  }
+  .entry-mood {
+    margin-top: 1.2rem;
+    display: inline-block;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    padding: 0.2rem 0.8rem;
+    border: 1px solid;
+    border-radius: 20px;
+  }
+  .mood-wistful { border-color: #7a9cb5; color: #4a7090; }
+  .mood-joyful { border-color: #c9922a; color: #8b5a10; }
+  .mood-reflective { border-color: #4a5c45; color: #2a3c26; }
+  .mood-restless { border-color: #8b3a1a; color: #5a1a08; }
+
+  /* ink writing animation */
+  .ink-write {
+    opacity: 0;
+    animation: inkWrite 0.8s ease-out forwards;
+  }
+  @keyframes inkWrite {
+    from { opacity: 0; transform: translateY(12px); filter: blur(2px); }
+    to { opacity: 1; transform: none; filter: none; }
+  }
+
+  /* ─── MEMORY MAP ─── */
+  #memorymap { background: #1a1408; color: var(--parchment); }
+
+  .map-container {
+    padding: 0 4rem 4rem;
+    min-height: 80vh;
+    position: relative;
+  }
+
+  #memorymap .page-header { color: var(--parchment); border-bottom-color: rgba(245,237,216,0.15); }
+  #memorymap .page-header h2 { color: var(--parchment); }
+
+  .star-map {
+    position: relative;
+    height: 600px;
+    margin-top: 2rem;
+    border: 1px solid rgba(201,146,42,0.2);
+    background:
+      radial-gradient(ellipse at 30% 40%, rgba(201,146,42,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 60%, rgba(139,58,26,0.08) 0%, transparent 50%),
+      #100e08;
+    overflow: hidden;
+  }
+
+  /* constellation lines */
+  .star-map::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600'%3E%3Cline x1='120' y1='150' x2='280' y2='220' stroke='rgba(201,146,42,0.15)' stroke-width='1'/%3E%3Cline x1='280' y1='220' x2='420' y2='180' stroke='rgba(201,146,42,0.12)' stroke-width='1'/%3E%3Cline x1='420' y1='180' x2='560' y2='280' stroke='rgba(201,146,42,0.1)' stroke-width='1'/%3E%3Cline x1='560' y1='280' x2='650' y2='380' stroke='rgba(201,146,42,0.15)' stroke-width='1'/%3E%3Cline x1='120' y1='150' x2='200' y2='350' stroke='rgba(201,146,42,0.08)' stroke-width='1'/%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+
+  .memory-pin {
+    position: absolute;
+    cursor: pointer;
+    transform: translate(-50%, -50%);
+    transition: transform 0.3s ease;
+  }
+  .memory-pin:hover { transform: translate(-50%, -50%) scale(1.2); }
+  .memory-pin:hover .pin-popup { opacity: 1; transform: translateY(-8px); pointer-events: auto; }
+
+  .pin-dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, var(--gold-light), var(--gold));
+    box-shadow: 0 0 12px rgba(201,146,42,0.5), 0 0 24px rgba(201,146,42,0.2);
+    animation: starPulse 3s ease-in-out infinite;
+    position: relative;
+  }
+  .pin-dot::after {
+    content: '';
+    position: absolute; inset: -5px;
+    border-radius: 50%;
+    border: 1px solid rgba(201,146,42,0.3);
+    animation: ringPulse 3s ease-in-out infinite;
+  }
+  @keyframes starPulse {
+    0%, 100% { box-shadow: 0 0 12px rgba(201,146,42,0.5), 0 0 24px rgba(201,146,42,0.2); }
+    50% { box-shadow: 0 0 18px rgba(201,146,42,0.8), 0 0 36px rgba(201,146,42,0.4); }
+  }
+  @keyframes ringPulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.4); opacity: 0; }
+  }
+
+  .pin-popup {
+    position: absolute;
+    bottom: 22px; left: 50%;
+    transform: translateX(-50%) translateY(0);
+    background: rgba(26,20,8,0.95);
+    border: 1px solid rgba(201,146,42,0.3);
+    padding: 0.8rem 1rem;
+    min-width: 160px;
+    text-align: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    white-space: nowrap;
+  }
+  .pin-popup::after {
+    content: '';
+    position: absolute; top: 100%; left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: rgba(201,146,42,0.3);
+  }
+  .pin-popup-title {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 0.9rem;
+    color: var(--gold-light);
+  }
+  .pin-popup-date {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    color: rgba(245,237,216,0.5);
+    margin-top: 0.2rem;
+    text-transform: uppercase;
+  }
+
+  /* tiny stars background */
+  .star-bg-dot {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(245,237,216,0.6);
+    pointer-events: none;
+  }
+
+  /* ─── ARCHIVE SHELF ─── */
+  #archive { background: var(--parchment-dark); }
+
+  .shelf-container {
+    padding: 2rem 4rem 6rem;
+    overflow-x: hidden;
+  }
+
+  .shelf-row {
+    position: relative;
+    margin-bottom: 4rem;
+  }
+
+  .shelf-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  .shelf-board {
+    display: flex;
+    gap: 0.4rem;
+    align-items: flex-end;
+    padding: 1.5rem 1rem 0;
+    position: relative;
+    min-height: 180px;
+  }
+  .shelf-board::after {
+    content: '';
+    position: absolute;
+    bottom: -12px; left: 0; right: 0;
+    height: 12px;
+    background: linear-gradient(to bottom, #b09070, #8a7060);
+    border-radius: 0 0 2px 2px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+  }
+  .shelf-board::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0; top: 0;
+    background: rgba(0,0,0,0.06);
+    border-radius: 2px;
+  }
+
+  .journal-book {
+    flex-shrink: 0;
+    width: 52px; height: 150px;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    transform-origin: bottom center;
+    border-radius: 2px 4px 4px 2px;
+    box-shadow: 2px 0 6px rgba(0,0,0,0.15), inset -2px 0 4px rgba(0,0,0,0.1);
+  }
+  .journal-book:hover { transform: translateY(-12px); }
+
+  .book-title-spine {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    padding: 8px 6px;
+  }
+
+  .journal-book.b1 { background: linear-gradient(to right, #2c1a0e, #3d2510); height: 145px; }
+  .journal-book.b2 { background: linear-gradient(to right, #1a2c1e, #243d28); height: 160px; }
+  .journal-book.b3 { background: linear-gradient(to right, #2c1a26, #3d2534); height: 135px; }
+  .journal-book.b4 { background: linear-gradient(to right, #1a1f2c, #25283d); height: 155px; }
+  .journal-book.b5 { background: linear-gradient(to right, #2c2310, #3d311a); height: 148px; }
+  .journal-book.b6 { background: linear-gradient(to right, #1f2c1a, #283d24); height: 140px; }
+  .journal-book.b7 { background: linear-gradient(to right, #2c1a1a, #3d2424); height: 162px; }
+  .journal-book.b8 { background: linear-gradient(to right, #1a2625, #243837); height: 150px; }
+  .journal-book.b9 { background: linear-gradient(to right, #262216, #382f1e); height: 144px; }
+  .journal-book.b10 { background: linear-gradient(to right, #1e1a26, #2a2438); height: 157px; }
+  .journal-book.b11 { background: linear-gradient(to right, #261a1a, #382424); height: 139px; }
+  .journal-book.b12 { background: linear-gradient(to right, #1a2218, #243020); height: 165px; }
+  .journal-book.b1 .book-title-spine { color: #e8d9a0; }
+  .journal-book.b2 .book-title-spine { color: #a0d9b0; }
+  .journal-book.b3 .book-title-spine { color: #d9a0c8; }
+  .journal-book.b4 .book-title-spine { color: #a0b4d9; }
+  .journal-book.b5 .book-title-spine { color: #d9c4a0; }
+  .journal-book.b6 .book-title-spine { color: #b0d4a0; }
+  .journal-book.b7 .book-title-spine { color: #d4a0a0; }
+  .journal-book.b8 .book-title-spine { color: #a0ccc8; }
+  .journal-book.b9 .book-title-spine { color: #ccc0a0; }
+  .journal-book.b10 .book-title-spine { color: #b4a8d4; }
+  .journal-book.b11 .book-title-spine { color: #d4a8a8; }
+  .journal-book.b12 .book-title-spine { color: #a8c4a4; }
+
+  /* bookend */
+  .bookend {
+    width: 18px; height: 130px;
+    background: linear-gradient(to right, #8a7060, #a08070);
+    border-radius: 2px;
+    box-shadow: inset -2px 0 4px rgba(0,0,0,0.2);
+    flex-shrink: 0;
+  }
+
+  /* ─── MOOD LEDGER ─── */
+  #moodledger { background: var(--cream); }
+
+  .mood-grid {
+    padding: 3rem 4rem 6rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+  }
+
+  .mood-chart-card {
+    background: var(--parchment);
+    border: 1px solid var(--parchment-deep);
+    padding: 2rem;
+  }
+
+  .mood-card-title {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 1.3rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid var(--parchment-deep);
+  }
+
+  /* watercolor bars */
+  .wc-bar-row {
+    display: flex; align-items: center;
+    gap: 1rem; margin-bottom: 1rem;
+  }
+  .wc-bar-label {
+    width: 90px; font-size: 0.85rem;
+    font-style: italic; color: var(--ink-light);
+    text-align: right; flex-shrink: 0;
+  }
+  .wc-bar-track {
+    flex: 1; height: 22px;
+    background: rgba(139,58,26,0.08);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+  .wc-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  .wc-bar-fill::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='22'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7 0.4' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100' height='22' filter='url(%23n)' opacity='0.12'/%3E%3C/svg%3E");
+    opacity: 0.4;
+  }
+  .wc-bar-fill.wistful { background: linear-gradient(to right, #5a8aaa, #7aaac8); }
+  .wc-bar-fill.joyful { background: linear-gradient(to right, #c9922a, #e8b84b); }
+  .wc-bar-fill.reflective { background: linear-gradient(to right, #4a5c45, #6a7c60); }
+  .wc-bar-fill.restless { background: linear-gradient(to right, #8b3a1a, #aa5a30); }
+  .wc-bar-fill.tender { background: linear-gradient(to right, #9a5c8a, #ba7caa); }
+  .wc-bar-fill.ecstatic { background: linear-gradient(to right, #c06840, #e08858); }
+  .wc-bar-value {
+    width: 36px;
+    font-size: 0.78rem;
+    color: var(--ink-light);
+    opacity: 0.7;
+    flex-shrink: 0;
+  }
+
+  /* year grid heatmap */
+  .heat-grid {
+    display: grid;
+    grid-template-columns: repeat(53, 1fr);
+    gap: 2px;
+    margin-top: 0.5rem;
+  }
+  .heat-cell {
+    aspect-ratio: 1;
+    border-radius: 1px;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .heat-cell:hover { transform: scale(1.4); }
+  .heat-0 { background: rgba(139,58,26,0.07); }
+  .heat-1 { background: rgba(139,58,26,0.2); }
+  .heat-2 { background: rgba(139,58,26,0.4); }
+  .heat-3 { background: rgba(201,146,42,0.6); }
+  .heat-4 { background: rgba(201,146,42,0.9); }
+
+  /* line chart */
+  .line-chart-svg { width: 100%; height: 160px; overflow: visible; }
+  .chart-path {
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .chart-area { opacity: 0.12; }
+
+  /* ─── PRESSED FLOWERS ─── */
+  #pressedflowers { background: #f8f3e8; }
+
+  .polaroid-grid {
+    padding: 3rem 4rem 6rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 2rem;
+  }
+
+  .polaroid {
+    background: #fff;
+    padding: 12px 12px 48px;
+    box-shadow: 3px 5px 20px rgba(26,18,9,0.12), 0 1px 4px rgba(26,18,9,0.08);
+    cursor: pointer;
+    transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.4s ease;
+    position: relative;
+  }
+  .polaroid:nth-child(odd) { transform: rotate(-1.5deg); }
+  .polaroid:nth-child(even) { transform: rotate(1.2deg); }
+  .polaroid:nth-child(3n) { transform: rotate(-0.8deg); }
+  .polaroid:hover { transform: rotate(0) scale(1.06) translateY(-8px) !important; box-shadow: 8px 16px 40px rgba(26,18,9,0.22); z-index: 10; }
+
+  .polaroid-img {
+    width: 100%; aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* placeholder flower art inside polaroids */
+  .polaroid-art {
+    width: 100%; aspect-ratio: 1;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3.5rem;
+    background: linear-gradient(135deg, #f0e6d0, #e8d8bc);
+    position: relative;
+    overflow: hidden;
+  }
+  .polaroid-art::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+  }
+
+  .polaroid-caption {
+    position: absolute;
+    bottom: 10px; left: 0; right: 0;
+    text-align: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 0.85rem;
+    color: var(--ink-light);
+  }
+
+  /* tape strips */
+  .tape {
+    position: absolute;
+    width: 48px; height: 20px;
+    background: rgba(232,217,187,0.7);
+    left: 50%; transform: translateX(-50%);
+    top: -8px;
+    border-radius: 1px;
+  }
+
+  /* ─── MARGINALIA ─── */
+  #marginalia {
+    background: #f7f1e0;
+    background-image: repeating-linear-gradient(
+      transparent, transparent 31px,
+      rgba(139,58,26,0.12) 31px, rgba(139,58,26,0.12) 32px
+    );
+  }
+
+  .margin-wrapper {
+    padding: 3rem 4rem 6rem;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 3rem;
+    background-image:
+      linear-gradient(to right, transparent 299px, rgba(139,58,26,0.2) 299px, rgba(139,58,26,0.2) 300px, transparent 300px);
+  }
+
+  .margin-main { padding-top: 1rem; }
+  .margin-note {
+    padding: 0.4rem 0 0.4rem 1.2rem;
+    line-height: 2;
+    font-size: 1.05rem;
+    border-left: none;
+    margin-bottom: 0.1rem;
+  }
+  .margin-note.scribble {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 0.95rem;
+    transform: rotate(-0.3deg);
+    display: inline-block;
+    color: var(--ink-light);
+  }
+  .margin-note.crossed {
+    text-decoration: line-through;
+    opacity: 0.45;
+  }
+
+  .scratch-card {
+    background: rgba(245,237,216,0.6);
+    border-left: 2px solid var(--gold);
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.5rem;
+    font-style: italic;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    position: relative;
+  }
+
+  .margin-sidebar { padding-top: 1rem; }
+  .sticky-note {
+    padding: 1.2rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.88rem;
+    line-height: 1.7;
+    font-style: italic;
+    position: relative;
+    box-shadow: 3px 5px 15px rgba(26,18,9,0.1);
+    transform: rotate(0.8deg);
+    transition: transform 0.3s;
+  }
+  .sticky-note:nth-child(even) { transform: rotate(-1.2deg); }
+  .sticky-note:hover { transform: rotate(0) scale(1.03); z-index: 5; }
+  .sticky-yellow { background: #fdf6c0; }
+  .sticky-pink { background: #fce4ec; }
+  .sticky-blue { background: #e3f2fd; }
+  .sticky-green { background: #e8f5e9; }
+
+  /* doodle placeholder */
+  .doodle-area {
+    width: 100%;
+    padding: 1.5rem;
+    background: rgba(245,237,216,0.4);
+    border: 1px dashed rgba(139,58,26,0.25);
+    margin-top: 2rem;
+    min-height: 140px;
+    display: flex; align-items: center; justify-content: center;
+    font-style: italic; font-size: 0.85rem; color: rgba(139,58,26,0.4);
+  }
+
+  /* ─── INDEX PAGE ─── */
+  #index-page { background: var(--parchment); }
+
+  .index-search-wrap {
+    padding: 0 4rem 2rem;
+  }
+  .index-search {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--parchment-deep);
+    padding: 0.8rem 0;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 1.3rem;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.3s;
+  }
+  .index-search:focus { border-bottom-color: var(--gold); }
+  .index-search::placeholder { opacity: 0.4; }
+
+  .tag-cloud {
+    padding: 0 4rem 2rem;
+    display: flex; flex-wrap: wrap; gap: 0.6rem;
+  }
+  .tag-pill {
+    padding: 0.3rem 1rem;
+    border: 1px solid var(--parchment-deep);
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-style: italic;
+    background: transparent;
+    color: var(--ink-light);
+  }
+  .tag-pill:hover, .tag-pill.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #fff;
+  }
+
+  .index-entries {
+    padding: 0 4rem 6rem;
+  }
+  .index-row {
+    display: flex; align-items: baseline; gap: 1.5rem;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid rgba(139,58,26,0.1);
+    cursor: pointer;
+    transition: padding-left 0.3s ease;
+  }
+  .index-row:hover { padding-left: 0.5rem; }
+  .index-row:hover .index-title { color: var(--gold); }
+
+  .index-row-date {
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    flex-shrink: 0; width: 100px;
+    text-transform: uppercase;
+  }
+  .index-title {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 1.1rem;
+    transition: color 0.3s;
+    flex: 1;
+  }
+  .index-tags {
+    display: flex; gap: 0.4rem;
+    flex-shrink: 0;
+  }
+  .mini-tag {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    padding: 0.15rem 0.5rem;
+    border: 1px solid var(--parchment-deep);
+    color: var(--ink-light);
+    opacity: 0.7;
+    text-transform: uppercase;
+  }
+
+  /* ─── PAGE TRANSITIONS ─── */
+  .page-flip-enter {
+    animation: pageFlipIn 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+  @keyframes pageFlipIn {
+    from { opacity: 0; transform: rotateY(-8deg) translateX(30px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  /* ─── FOOTER ─── */
+  .page-footer {
+    padding: 2rem 4rem;
+    border-top: 1px solid var(--parchment-deep);
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    color: var(--ink-light);
+    opacity: 0.5;
+    font-style: italic;
+  }
+  #memorymap .page-footer { border-top-color: rgba(245,237,216,0.1); color: rgba(245,237,216,0.4); }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--parchment-dark); }
+  ::-webkit-scrollbar-thumb { background: var(--parchment-deep); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+  /* responsive */
+  @media (max-width: 768px) {
+    nav { padding: 1rem; }
+    .nav-links { gap: 1rem; }
+    .book-scene { width: 340px; height: 260px; transform: scale(0.6); }
+    .entries-grid, .mood-grid, .polaroid-grid { padding: 2rem 1.5rem 4rem; }
+    .page-header { padding: 6rem 2rem 2rem; }
+    .margin-wrapper { grid-template-columns: 1fr; }
+    .mood-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo"><span>F</span>olio</div>
+  <ul class="nav-links">
+    <li><a href="#" onclick="showSection('home')">Home</a></li>
+    <li><a href="#" onclick="showSection('inkroom')">Ink Room</a></li>
+    <li><a href="#" onclick="showSection('memorymap')">Map</a></li>
+    <li><a href="#" onclick="showSection('archive')">Archive</a></li>
+    <li><a href="#" onclick="showSection('moodledger')">Ledger</a></li>
+    <li><a href="#" onclick="showSection('pressedflowers')">Gallery</a></li>
+    <li><a href="#" onclick="showSection('marginalia')">Marginalia</a></li>
+    <li><a href="#" onclick="showSection('index-page')">Index</a></li>
+  </ul>
+</nav>
+
+<!-- ═══════════════════════ HOME ═══════════════════════ -->
+<section id="home" class="active">
+  <div class="bg-texture"></div>
+  <div class="deco-lines"></div>
+
+  <div class="book-scene" id="bookScene" onclick="inkSplash(event, this)">
+    <div class="book" id="theBook">
+      <!-- left open page -->
+      <div class="left-page">
+        <div class="page-rule"></div>
+        <div class="page-line"></div>
+        <div class="page-line short"></div>
+        <div class="page-line"></div>
+        <div class="page-line shorter"></div>
+        <div class="page-line"></div>
+        <div class="page-line short"></div>
+        <div class="page-rule"></div>
+        <div class="page-line"></div>
+        <div class="page-line shorter"></div>
+        <div class="page-line"></div>
+        <div class="page-number-left">— 1 —</div>
+      </div>
+      <!-- right open page -->
+      <div class="right-page">
+        <div class="page-rule"></div>
+        <div class="page-line short"></div>
+        <div class="page-line"></div>
+        <div class="page-line shorter"></div>
+        <div class="page-line"></div>
+        <div class="page-rule"></div>
+        <div class="page-line"></div>
+        <div class="page-line short"></div>
+        <div class="page-line"></div>
+        <div class="page-line shorter"></div>
+        <div class="page-line"></div>
+        <div class="page-number-right">2 —</div>
+      </div>
+      <!-- spine -->
+      <div class="book-spine"></div>
+      <!-- pages stack -->
+      <div class="book-pages-stack"></div>
+      <!-- back cover -->
+      <div class="book-cover-back"></div>
+      <!-- front cover -->
+      <div class="book-cover">
+        <div class="cover-border"></div>
+        <!-- corner ornaments as SVG -->
+        <svg class="cover-ornament tl" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2 2 L26 2 M2 2 L2 26" stroke="#c9922a" stroke-width="1"/>
+          <path d="M6 2 Q8 8 14 6 Q8 10 6 18 Q10 12 18 14 Q10 12 6 26" stroke="#c9922a" stroke-width="0.7" fill="none"/>
+        </svg>
+        <svg class="cover-ornament tr" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2 2 L26 2 M2 2 L2 26" stroke="#c9922a" stroke-width="1"/>
+          <path d="M6 2 Q8 8 14 6 Q8 10 6 18 Q10 12 18 14 Q10 12 6 26" stroke="#c9922a" stroke-width="0.7" fill="none"/>
+        </svg>
+        <svg class="cover-ornament bl" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2 2 L26 2 M2 2 L2 26" stroke="#c9922a" stroke-width="1"/>
+          <path d="M6 2 Q8 8 14 6 Q8 10 6 18 Q10 12 18 14 Q10 12 6 26" stroke="#c9922a" stroke-width="0.7" fill="none"/>
+        </svg>
+        <svg class="cover-ornament br" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2 2 L26 2 M2 2 L2 26" stroke="#c9922a" stroke-width="1"/>
+          <path d="M6 2 Q8 8 14 6 Q8 10 6 18 Q10 12 18 14 Q10 12 6 26" stroke="#c9922a" stroke-width="0.7" fill="none"/>
+        </svg>
+        <div class="cover-title">
+          <h1>Folio</h1>
+          <p>A Living Journal</p>
+        </div>
+      </div>
+    </div>
+    <!-- enter button -->
+    <div class="enter-btn-wrap">
+      <button class="enter-btn" onclick="showSection('inkroom')">Open the journal</button>
+      <p class="enter-tagline">Where every day becomes a page</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ INK ROOM ═══════════════════════ -->
+<section id="inkroom">
+  <div class="page-header" data-chapter="Chapter I">
+    <h2>The Ink Room</h2>
+    <p>Where thoughts find form, and form finds permanence.</p>
+    <div class="header-rule"></div>
+  </div>
+
+  <div class="entries-grid" id="entriesGrid">
+    <!-- entries injected by JS -->
+  </div>
+
+  <div class="page-footer">
+    <span>Folio — The Ink Room</span>
+    <span>12 entries this season</span>
+  </div>
+</section>
+
+<!-- ═══════════════════════ MEMORY MAP ═══════════════════════ -->
+<section id="memorymap">
+  <div class="page-header" data-chapter="Chapter II" style="background:#1a1408; border-bottom-color:rgba(245,237,216,0.15);">
+    <h2 style="color:var(--parchment)">Map of Memories</h2>
+    <p style="color:rgba(245,237,216,0.5)">Each constellation, a moment preserved in amber light.</p>
+    <div class="header-rule"></div>
+  </div>
+
+  <div class="map-container">
+    <div class="star-map" id="starMap">
+      <!-- stars and pins injected by JS -->
+    </div>
+  </div>
+
+  <div class="page-footer" style="background:#1a1408; border-top-color:rgba(245,237,216,0.1); color:rgba(245,237,216,0.35)">
+    <span>Folio — Memory Map</span>
+    <span>7 constellations charted</span>
+  </div>
+</section>
+
+<!-- ═══════════════════════ ARCHIVE SHELF ═══════════════════════ -->
+<section id="archive">
+  <div class="page-header" data-chapter="Chapter III">
+    <h2>The Archive</h2>
+    <p>Years gathered spine by spine, waiting to be revisited.</p>
+    <div class="header-rule"></div>
+  </div>
+
+  <div class="shelf-container">
+    <div class="shelf-row">
+      <div class="shelf-label">2024</div>
+      <div class="shelf-board">
+        <div class="bookend"></div>
+        <div class="journal-book b1"><div class="book-title-spine">January</div></div>
+        <div class="journal-book b2"><div class="book-title-spine">February</div></div>
+        <div class="journal-book b3"><div class="book-title-spine">March</div></div>
+        <div class="journal-book b4"><div class="book-title-spine">April</div></div>
+        <div class="journal-book b5"><div class="book-title-spine">May</div></div>
+        <div class="journal-book b6"><div class="book-title-spine">June</div></div>
+        <div class="journal-book b7"><div class="book-title-spine">July</div></div>
+        <div class="journal-book b8"><div class="book-title-spine">August</div></div>
+        <div class="journal-book b9"><div class="book-title-spine">September</div></div>
+        <div class="journal-book b10"><div class="book-title-spine">October</div></div>
+        <div class="journal-book b11"><div class="book-title-spine">November</div></div>
+        <div class="journal-book b12"><div class="book-title-spine">December</div></div>
+      </div>
+    </div>
+    <div class="shelf-row">
+      <div class="shelf-label">2023</div>
+      <div class="shelf-board">
+        <div class="bookend"></div>
+        <div class="journal-book b3"><div class="book-title-spine">January</div></div>
+        <div class="journal-book b8"><div class="book-title-spine">February</div></div>
+        <div class="journal-book b5"><div class="book-title-spine">March</div></div>
+        <div class="journal-book b2"><div class="book-title-spine">April</div></div>
+        <div class="journal-book b10"><div class="book-title-spine">May</div></div>
+        <div class="journal-book b6"><div class="book-title-spine">June</div></div>
+        <div class="journal-book b1"><div class="book-title-spine">July</div></div>
+        <div class="journal-book b11"><div class="book-title-spine">August</div></div>
+        <div class="journal-book b4"><div class="book-title-spine">September</div></div>
+        <div class="journal-book b9"><div class="book-title-spine">October</div></div>
+        <div class="journal-book b7"><div class="book-title-spine">November</div></div>
+        <div class="journal-book b12"><div class="book-title-spine">December</div></div>
+      </div>
+    </div>
+    <div class="shelf-row">
+      <div class="shelf-label">2022</div>
+      <div class="shelf-board">
+        <div class="bookend"></div>
+        <div class="journal-book b7"><div class="book-title-spine">January</div></div>
+        <div class="journal-book b4"><div class="book-title-spine">February</div></div>
+        <div class="journal-book b9"><div class="book-title-spine">March</div></div>
+        <div class="journal-book b1"><div class="book-title-spine">April</div></div>
+        <div class="journal-book b6"><div class="book-title-spine">May</div></div>
+        <div class="journal-book b11"><div class="book-title-spine">June</div></div>
+        <div class="journal-book b3"><div class="book-title-spine">July</div></div>
+        <div class="journal-book b8"><div class="book-title-spine">August</div></div>
+        <div class="journal-book b2"><div class="book-title-spine">September</div></div>
+        <div class="journal-book b5"><div class="book-title-spine">October</div></div>
+        <div class="journal-book b10"><div class="book-title-spine">November</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span>Folio — The Archive</span>
+    <span>35 volumes, 1,240 pages</span>
+  </div>
+</section>
+
+<!-- ═══════════════════════ MOOD LEDGER ═══════════════════════ -->
+<section id="moodledger">
+  <div class="page-header" data-chapter="Chapter IV">
+    <h2>Mood Ledger</h2>
+    <p>The emotional cartography of a year lived in full.</p>
+    <div class="header-rule"></div>
+  </div>
+
+  <div class="mood-grid">
+    <!-- Frequency bars -->
+    <div class="mood-chart-card">
+      <div class="mood-card-title">Emotional Frequency — 2024</div>
+      <div class="wc-bar-row">
+        <div class="wc-bar-label">Reflective</div>
+        <div class="wc-bar-track"><div class="wc-bar-fill reflective" style="width:0%" data-val="78%"></div></div>
+        <div class="wc-bar-value">78%</div>
+      </div>
+      <div class="wc-bar-row">
+        <div class="wc-bar-label">Joyful</div>
+        <div class="wc-bar-track"><div class="wc-bar-fill joyful" style="width:0%" data-val="62%"></div></div>
+        <div class="wc-bar-value">62%</div>
+      </div>
+      <div class="wc-bar-row">
+        <div class="wc-bar-label">Wistful</div>
+        <div class="wc-bar-track"><div class="wc-bar-fill wistful" style="width:0%" data-val="54%"></div></div>
+        <div class="wc-bar-value">54%</div>
+      </div>
+      <div class="wc-bar-row">
+        <div class="wc-bar-label">Restless</div>
+        <div class="wc-bar-track"><div class="wc-bar-fill restless" style="width:0%" data-val="38%"></div></div>
+        <div class="wc-bar-value">38%</div>
+      </div>
+      <div class="wc-bar-row">
+        <div class="wc-bar-label">Tender</div>
+        <div class="wc-bar-track"><div class="wc-bar-fill tender" style="width:0%" data-val="45%"></div></div>
+        <div class="wc-bar-value">45%</div>
+      </div>
+      <div class="wc-bar-row">
+        <div class="wc-bar-label">Ecstatic</div>
+        <div class="wc-bar-track"><div class="wc-bar-fill ecstatic" style="width:0%" data-val="21%"></div></div>
+        <div class="wc-bar-value">21%</div>
+      </div>
+    </div>
+
+    <!-- SVG line chart -->
+    <div class="mood-chart-card">
+      <div class="mood-card-title">Monthly Arc — 2024</div>
+      <svg class="line-chart-svg" viewBox="0 0 380 160" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="lg1" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#c9922a" stop-opacity="0.4"/>
+            <stop offset="100%" stop-color="#c9922a" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="lg2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#4a5c45" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#4a5c45" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <!-- Grid lines -->
+        <line x1="0" y1="40" x2="380" y2="40" stroke="rgba(139,58,26,0.1)" stroke-width="0.5"/>
+        <line x1="0" y1="80" x2="380" y2="80" stroke="rgba(139,58,26,0.1)" stroke-width="0.5"/>
+        <line x1="0" y1="120" x2="380" y2="120" stroke="rgba(139,58,26,0.1)" stroke-width="0.5"/>
+        <!-- Joy line -->
+        <path class="chart-path chart-area" fill="url(#lg1)"
+          d="M0,90 L32,70 L64,80 L96,50 L128,60 L160,45 L192,55 L224,40 L256,60 L288,50 L320,70 L352,60 L380,80 L380,160 L0,160Z"/>
+        <path class="chart-path" stroke="#c9922a" stroke-width="1.5" fill="none"
+          d="M0,90 L32,70 L64,80 L96,50 L128,60 L160,45 L192,55 L224,40 L256,60 L288,50 L320,70 L352,60 L380,80"/>
+        <!-- Reflective line -->
+        <path class="chart-path" stroke="#4a5c45" stroke-width="1.5" fill="none" stroke-dasharray="5,3"
+          d="M0,60 L32,55 L64,65 L96,50 L128,70 L160,55 L192,80 L224,65 L256,75 L288,60 L320,50 L352,70 L380,60"/>
+        <!-- dots -->
+        <circle cx="224" cy="40" r="3" fill="#c9922a"/>
+        <circle cx="160" cy="45" r="2.5" fill="#c9922a" opacity="0.7"/>
+        <!-- month labels -->
+        <text x="0" y="155" font-family="Cormorant Garamond, serif" font-size="8" fill="rgba(139,58,26,0.5)">Jan</text>
+        <text x="60" y="155" font-family="Cormorant Garamond, serif" font-size="8" fill="rgba(139,58,26,0.5)">Mar</text>
+        <text x="125" y="155" font-family="Cormorant Garamond, serif" font-size="8" fill="rgba(139,58,26,0.5)">May</text>
+        <text x="190" y="155" font-family="Cormorant Garamond, serif" font-size="8" fill="rgba(139,58,26,0.5)">Jul</text>
+        <text x="255" y="155" font-family="Cormorant Garamond, serif" font-size="8" fill="rgba(139,58,26,0.5)">Sep</text>
+        <text x="320" y="155" font-family="Cormorant Garamond, serif" font-size="8" fill="rgba(139,58,26,0.5)">Nov</text>
+      </svg>
+      <div style="display:flex; gap:1.5rem; margin-top:1rem; font-size:0.78rem; font-style:italic; color:var(--ink-light); opacity:0.7">
+        <span style="display:flex;align-items:center;gap:0.4rem"><span style="width:20px;height:2px;background:#c9922a;display:inline-block"></span>Joy</span>
+        <span style="display:flex;align-items:center;gap:0.4rem"><span style="width:20px;height:1px;background:#4a5c45;border-top:1px dashed #4a5c45;display:inline-block"></span>Reflection</span>
+      </div>
+    </div>
+
+    <!-- Heatmap -->
+    <div class="mood-chart-card" style="grid-column: span 2;">
+      <div class="mood-card-title">Entry Heatmap — 2024</div>
+      <div class="heat-grid" id="heatGrid"></div>
+      <div style="display:flex;gap:0.5rem;align-items:center;margin-top:1rem;font-size:0.78rem;font-style:italic;color:var(--ink-light);opacity:0.6">
+        <span>Less</span>
+        <div style="width:14px;height:14px;border-radius:2px;background:rgba(139,58,26,0.07)"></div>
+        <div style="width:14px;height:14px;border-radius:2px;background:rgba(139,58,26,0.2)"></div>
+        <div style="width:14px;height:14px;border-radius:2px;background:rgba(139,58,26,0.4)"></div>
+        <div style="width:14px;height:14px;border-radius:2px;background:rgba(201,146,42,0.6)"></div>
+        <div style="width:14px;height:14px;border-radius:2px;background:rgba(201,146,42,0.9)"></div>
+        <span>More</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span>Folio — Mood Ledger</span>
+    <span>365 days charted</span>
+  </div>
+</section>
+
+<!-- ═══════════════════════ PRESSED FLOWERS ═══════════════════════ -->
+<section id="pressedflowers">
+  <div class="page-header" data-chapter="Chapter V">
+    <h2>Pressed Flowers</h2>
+    <p>Moments flattened between pages — still blooming.</p>
+    <div class="header-rule"></div>
+  </div>
+
+  <div class="polaroid-grid">
+    <div class="polaroid"><div class="tape"></div><div class="polaroid-art">🌸</div><div class="polaroid-caption">Spring morning</div></div>
+    <div class="polaroid"><div class="tape"></div><div class="polaroid-art">🌿</div><div class="polaroid-caption">The garden path</div></div>
+    <div class="polaroid"><div class="tape"></div><div class="polaroid-art">🍂</div><div class="polaroid-caption">October, 4pm</div></div>
+    <div class="polaroid"><div class="tape"></div><div class="polaroid-art">🌾</div><div class="polaroid-caption">Golden hour</div></div>
+    <div class="polaroid"><div class="tape"></div><div class="polaroid-art">🌺</div><div class="polaroid-caption">A gift, forgotten</div></div>
+    <div class="polaroid"><div class="tape"></div><div class="polaroid-art">🍃</div><div class="polaroid-caption">After the rain</div></div>
+    <div class="polaroid"><div class="tape"></div><div class="polaroid-art">🌻</div><div class="polaroid-caption">Sunflower field</div></div>
+    <div class="polaroid"><div class="tape"></div><div class="polaroid-art">🍁</div><div class="polaroid-caption">Last leaf</div></div>
+    <div class="polaroid"><div class="tape"></div><div class="polaroid-art">🌼</div><div class="polaroid-caption">Tuesday's walk</div></div>
+  </div>
+
+  <div class="page-footer">
+    <span>Folio — Pressed Flowers</span>
+    <span>9 memories preserved</span>
+  </div>
+</section>
+
+<!-- ═══════════════════════ MARGINALIA ═══════════════════════ -->
+<section id="marginalia">
+  <div class="page-header" data-chapter="Chapter VI">
+    <h2>Marginalia</h2>
+    <p>The scraps. The scribbles. The asides that become the heart of the thing.</p>
+    <div class="header-rule"></div>
+  </div>
+
+  <div class="margin-wrapper">
+    <div class="margin-main">
+      <div class="scratch-card">
+        "There is something about an empty page that is both terrifying and holy — it asks nothing of you, and everything."
+      </div>
+      <div class="margin-note">Today I walked the long way home. Twice. I am not sure if this is habit or avoidance or something else entirely — the kind of thing you only understand years later when it becomes a chapter.</div>
+      <div class="margin-note scribble">→ note to self: buy more of that tea</div>
+      <div class="margin-note">The café on Bishops Street plays the same three songs every Tuesday. I know them now by heart without ever wanting to. This is how most of the best things happen.</div>
+      <div class="margin-note crossed">Call that person back. Actually.</div>
+      <div class="margin-note">There is a particular quality of light on the wall at half past four in October. It is the colour of everything you meant to say.</div>
+      <div class="margin-note scribble">?? look this up later — the Roman concept of <em>solastalgia</em></div>
+      <div class="margin-note">I finished the book. I sat with the last page for a long time. I think I was grieving, a little.</div>
+      <div class="doodle-area">
+        ✦ doodle space — something small drawn here one afternoon ✦
+      </div>
+    </div>
+    <div class="margin-sidebar">
+      <div class="sticky-note sticky-yellow">
+        "Bloom where you are planted" — but what if the soil is wrong? Research this.
+      </div>
+      <div class="sticky-note sticky-pink">
+        Film idea: the last person in a city who still reads physical maps.
+      </div>
+      <div class="sticky-note sticky-blue">
+        Books to find:<br>— <em>The Rings of Saturn</em><br>— anything by Tove Jansson<br>— that one with the blue spine
+      </div>
+      <div class="sticky-note sticky-green">
+        Next season: learn one new thing every week. Write about it.
+      </div>
+      <div class="sticky-note sticky-yellow" style="margin-top:2rem; font-size:0.78rem; opacity:0.6">
+        Words I love this month: liminal, petrichor, hiraeth, sonder.
+      </div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span>Folio — Marginalia</span>
+    <span>The unruly margins</span>
+  </div>
+</section>
+
+<!-- ═══════════════════════ INDEX ═══════════════════════ -->
+<section id="index-page">
+  <div class="page-header" data-chapter="Chapter VII">
+    <h2>The Index</h2>
+    <p>Every word, findable. Every moment, retrievable.</p>
+    <div class="header-rule"></div>
+  </div>
+
+  <div class="index-search-wrap">
+    <input type="text" class="index-search" placeholder="Search entries, moods, places…" oninput="filterIndex(this.value)">
+  </div>
+
+  <div class="tag-cloud">
+    <div class="tag-pill" onclick="toggleTag(this)">travel</div>
+    <div class="tag-pill" onclick="toggleTag(this)">nature</div>
+    <div class="tag-pill" onclick="toggleTag(this)">reflection</div>
+    <div class="tag-pill" onclick="toggleTag(this)">books</div>
+    <div class="tag-pill" onclick="toggleTag(this)">morning</div>
+    <div class="tag-pill" onclick="toggleTag(this)">city</div>
+    <div class="tag-pill" onclick="toggleTag(this)">memory</div>
+    <div class="tag-pill" onclick="toggleTag(this)">seasons</div>
+    <div class="tag-pill" onclick="toggleTag(this)">solitude</div>
+    <div class="tag-pill" onclick="toggleTag(this)">fragments</div>
+  </div>
+
+  <div class="index-entries" id="indexEntries">
+    <!-- injected by JS -->
+  </div>
+
+  <div class="page-footer">
+    <span>Folio — The Index</span>
+    <span>All entries catalogued</span>
+  </div>
+</section>
+
+<script>
+// ─── DATA ───
+const entries = [
+  { date: "Mar 14, 2024", title: "The morning the fog refused to lift", body: "It sat heavy over everything — the kind of morning that asks you to stay still. I made coffee three times and read the same page four times, and felt, somehow, completely full.", mood: "wistful", tags: ["morning","seasons"] },
+  { date: "Feb 28, 2024", title: "On the pleasure of being lost", body: "Not dramatically lost. Just enough to not know what street comes next, which turns a city into a place again instead of a route.", mood: "joyful", tags: ["travel","city"] },
+  { date: "Jan 19, 2024", title: "A letter I won't send", body: "I wrote it anyway. Sometimes writing is not about sending. It is about the act of forming the words into something solid enough to hold.", mood: "reflective", tags: ["reflection","memory"] },
+  { date: "Dec 7, 2023", title: "The bookshop on the corner", body: "It smells of dust and decisions. I spent an hour there and left with something I didn't know I needed.", mood: "joyful", tags: ["books","city"] },
+  { date: "Nov 30, 2023", title: "November's particular silence", body: "November has a way of making everything feel final. Not in a bad way. In the way that a last chapter feels — inevitable, earned.", mood: "reflective", tags: ["seasons","solitude"] },
+  { date: "Oct 3, 2023", title: "Watching the leaves turn", body: "There is something almost violent about autumn's beauty — it is so insistent. Look, it says. Pay attention. This will not last.", mood: "wistful", tags: ["nature","seasons"] },
+  { date: "Sep 15, 2023", title: "A conversation on a train", body: "A stranger told me something I will carry for a long time. We will never meet again. This is fine. This is more than enough.", mood: "reflective", tags: ["travel","memory"] },
+  { date: "Aug 22, 2023", title: "The summer I finally learned to swim", body: "Late. Very late. But the water didn't care. The water just held me.", mood: "joyful", tags: ["nature","memory"] },
+  { date: "Jul 1, 2023", title: "Heat and the absence of plans", body: "Nothing was required of me today. I kept waiting for the guilt. It never came. A small triumph.", mood: "joyful", tags: ["solitude","seasons"] },
+  { date: "Jun 9, 2023", title: "On returning to old places", body: "The street doesn't know you've changed. It just waits there. Being a street. Which is its own kind of wisdom.", mood: "wistful", tags: ["travel","memory","reflection"] },
+  { date: "May 4, 2023", title: "Fragments from a sleepless night", body: "3am thoughts arranged in no particular order. Some were useful. Most were not. All felt urgent at the time.", mood: "restless", tags: ["fragments","reflection"] },
+  { date: "Apr 11, 2023", title: "The first warm day", body: "People poured into the streets like they'd been waiting. We had. We all had. We just hadn't said it out loud.", mood: "joyful", tags: ["seasons","city","nature"] },
+];
+
+const mapPins = [
+  { x: "18%", y: "25%", title: "Kyoto, Japan", date: "April 2023", delay: 0 },
+  { x: "40%", y: "35%", title: "A train through Scotland", date: "September 2023", delay: 0.4 },
+  { x: "62%", y: "55%", title: "The coastal path", date: "August 2023", delay: 0.8 },
+  { x: "75%", y: "38%", title: "Afternoon in Istanbul", date: "June 2023", delay: 0.2 },
+  { x: "28%", y: "65%", title: "The old bookshop", date: "December 2023", delay: 1.0 },
+  { x: "53%", y: "22%", title: "Morning mist, nowhere specific", date: "March 2024", delay: 0.6 },
+  { x: "85%", y: "65%", title: "A garden I stumbled into", date: "May 2023", delay: 1.2 },
+];
+
+// ─── NAV / SECTION SWITCH ───
+function showSection(id) {
+  document.querySelectorAll('section').forEach(s => {
+    s.classList.remove('active');
+    s.style.display = 'none';
+  });
+  const target = document.getElementById(id);
+  target.style.display = id === 'home' ? 'flex' : 'block';
+  target.classList.add('active');
+  target.classList.add('page-flip-enter');
+  setTimeout(() => target.classList.remove('page-flip-enter'), 700);
+  window.scrollTo(0, 0);
+
+  if (id === 'inkroom') renderEntries();
+  if (id === 'memorymap') renderMap();
+  if (id === 'moodledger') { renderHeatmap(); animateBars(); }
+  if (id === 'index-page') renderIndex();
+}
+
+// fix initial display
+document.getElementById('home').style.display = 'flex';
+
+// ─── INK ROOM ───
+function renderEntries() {
+  const grid = document.getElementById('entriesGrid');
+  if (grid.children.length > 0) return;
+  entries.forEach((e, i) => {
+    const card = document.createElement('div');
+    card.className = 'entry-card ink-write';
+    card.style.animationDelay = (i * 0.08) + 's';
+    card.innerHTML = `
+      <div class="entry-date">${e.date}</div>
+      <div class="entry-title">${e.title}</div>
+      <div class="entry-body">${e.body}</div>
+      <span class="entry-mood mood-${e.mood}">${e.mood}</span>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ─── MEMORY MAP ───
+function renderMap() {
+  const map = document.getElementById('starMap');
+  if (map.children.length > 0) return;
+
+  // background stars
+  for (let i = 0; i < 80; i++) {
+    const star = document.createElement('div');
+    star.className = 'star-bg-dot';
+    const size = Math.random() * 2 + 0.5;
+    star.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%;
+      top:${Math.random()*100}%;
+      opacity:${Math.random()*0.5+0.1};
+    `;
+    map.appendChild(star);
+  }
+
+  // pins
+  mapPins.forEach((pin, i) => {
+    const el = document.createElement('div');
+    el.className = 'memory-pin';
+    el.style.cssText = `left:${pin.x}; top:${pin.y}; animation-delay:${pin.delay}s`;
+    el.innerHTML = `
+      <div class="pin-dot"></div>
+      <div class="pin-popup">
+        <div class="pin-popup-title">${pin.title}</div>
+        <div class="pin-popup-date">${pin.date}</div>
+      </div>
+    `;
+    map.appendChild(el);
+  });
+}
+
+// ─── HEATMAP ───
+function renderHeatmap() {
+  const grid = document.getElementById('heatGrid');
+  if (grid.children.length > 0) return;
+  for (let i = 0; i < 371; i++) {
+    const cell = document.createElement('div');
+    const r = Math.random();
+    const level = r < 0.35 ? 0 : r < 0.55 ? 1 : r < 0.72 ? 2 : r < 0.88 ? 3 : 4;
+    cell.className = `heat-cell heat-${level}`;
+    grid.appendChild(cell);
+  }
+}
+
+function animateBars() {
+  setTimeout(() => {
+    document.querySelectorAll('.wc-bar-fill').forEach(bar => {
+      bar.style.width = bar.dataset.val;
+    });
+  }, 200);
+}
+
+// ─── INDEX ───
+function renderIndex() {
+  const container = document.getElementById('indexEntries');
+  if (container.children.length > 0) return;
+  populateIndex(entries);
+}
+
+function populateIndex(list) {
+  const container = document.getElementById('indexEntries');
+  container.innerHTML = '';
+  list.forEach(e => {
+    const row = document.createElement('div');
+    row.className = 'index-row';
+    row.innerHTML = `
+      <div class="index-row-date">${e.date}</div>
+      <div class="index-title">${e.title}</div>
+      <div class="index-tags">${e.tags.map(t => `<span class="mini-tag">${t}</span>`).join('')}</div>
+    `;
+    row.onclick = () => showSection('inkroom');
+    container.appendChild(row);
+  });
+}
+
+function filterIndex(val) {
+  const v = val.toLowerCase();
+  const filtered = entries.filter(e =>
+    e.title.toLowerCase().includes(v) ||
+    e.body.toLowerCase().includes(v) ||
+    e.tags.some(t => t.includes(v)) ||
+    e.mood.includes(v)
+  );
+  populateIndex(filtered);
+}
+
+function toggleTag(el) {
+  el.classList.toggle('active');
+  const active = [...document.querySelectorAll('.tag-pill.active')].map(p => p.textContent);
+  if (active.length === 0) { populateIndex(entries); return; }
+  const filtered = entries.filter(e => active.some(t => e.tags.includes(t)));
+  populateIndex(filtered);
+}
+
+// ─── INK SPLASH on book click ───
+function inkSplash(e, scene) {
+  const rect = scene.getBoundingClientRect();
+  const drop = document.createElement('div');
+  drop.className = 'ink-drop';
+  const size = 60 + Math.random() * 80;
+  drop.style.cssText = `
+    left:${e.clientX - rect.left - size/2}px;
+    top:${e.clientY - rect.top - size/2}px;
+    width:${size}px; height:${size}px;
+    pointer-events:none;
+  `;
+  scene.appendChild(drop);
+  setTimeout(() => drop.remove(), 900);
+}
+</script>
+</body>
+</html>
