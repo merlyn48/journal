@@ -125,178 +125,232 @@
     opacity: 0.6;
   }
 
+  /* ─── OPEN BOOK SCENE ─── */
   .book-scene {
-    perspective: 1800px;
-    perspective-origin: 50% 45%;
-    width: 640px; height: 420px;
+    perspective: 2200px;
+    perspective-origin: 50% 38%;
+    width: 760px;
+    height: 460px;
     position: relative;
     overflow: visible;
-    margin-bottom: 5rem;
+    margin-bottom: 6rem;
   }
 
   .book {
     width: 100%; height: 100%;
     position: relative;
     transform-style: preserve-3d;
-    animation: bookFloat 5s ease-in-out infinite;
+    transform: rotateX(8deg) rotateY(0deg);
+    transition: transform 0.6s ease;
   }
 
-  @keyframes bookFloat {
-    0%, 100% { transform: rotateX(4deg) rotateY(-4deg) rotateZ(0.5deg); }
-    50% { transform: rotateX(6deg) rotateY(-2deg) rotateZ(-0.5deg); }
-  }
-
-  .book-cover-back {
-    position: absolute; inset: 0;
-    background: linear-gradient(135deg, #2a1a08 0%, #1a0d04 100%);
-    border-radius: 2px 12px 12px 2px;
-    transform: translateZ(-8px);
-    box-shadow: -20px 20px 60px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.3);
-  }
-
-  .book-spine {
+  /* ── SPREAD: left + right pages side by side ── */
+  .book-spread {
     position: absolute;
-    left: -22px; top: 0; bottom: 0; width: 22px;
-    background: linear-gradient(to right, #150a02, #2e1a06, #1a0d04);
-    border-radius: 4px 0 0 4px;
-    transform: rotateY(-90deg) translateZ(11px);
-    transform-origin: right center;
-    box-shadow: -8px 0 20px rgba(0,0,0,0.4);
+    inset: 0;
+    display: flex;
+    transform-style: preserve-3d;
   }
 
-  .book-pages-stack {
-    position: absolute;
-    right: -6px; top: 3px; bottom: 3px; width: 10px;
-    background: repeating-linear-gradient(
-      to bottom,
-      #f5edd8 0px, #f5edd8 2px,
-      #e8d9bb 2px, #e8d9bb 3px
-    );
-    border-radius: 0 2px 2px 0;
-    transform: translateZ(-3px);
-  }
-
-  .book-cover {
-    position: absolute; inset: 0;
-    background: linear-gradient(135deg, #2e1a06 0%, #1e0e03 50%, #2a1505 100%);
-    border-radius: 2px 10px 10px 2px;
-    transform: translateZ(4px);
+  /* shared page base */
+  .page-base {
+    width: 50%; height: 100%;
+    position: relative;
     overflow: hidden;
-    box-shadow: 4px 4px 20px rgba(0,0,0,0.3);
+    display: flex; flex-direction: column; gap: 13px;
+    padding: 32px 28px 24px;
   }
 
-  .cover-border {
+  /* LEFT static page (always visible under flipping page) */
+  .page-left-static {
+    background: linear-gradient(to right, #ede0c4, #f5edd8);
+    border-radius: 3px 0 0 3px;
+    box-shadow: inset -4px 0 12px rgba(0,0,0,0.1);
+  }
+
+  /* RIGHT static page */
+  .page-right-static {
+    background: linear-gradient(to left, #ede0c4, #f5edd8);
+    border-radius: 0 3px 3px 0;
+    box-shadow: inset 4px 0 12px rgba(0,0,0,0.1);
+  }
+
+  /* SPINE — thin centre strip */
+  .book-center-spine {
     position: absolute;
-    inset: 12px;
-    border: 1px solid rgba(201,146,42,0.5);
-    border-radius: 2px;
+    left: 50%; top: 0; bottom: 0;
+    width: 6px;
+    transform: translateX(-50%) translateZ(1px);
+    background: linear-gradient(to right,
+      rgba(0,0,0,0.18) 0%,
+      rgba(180,140,80,0.3) 50%,
+      rgba(0,0,0,0.18) 100%);
+    z-index: 10;
     pointer-events: none;
   }
-  .cover-border::before {
+  .book-center-spine::before {
     content: '';
-    position: absolute;
-    inset: 5px;
-    border: 1px solid rgba(201,146,42,0.2);
-    border-radius: 1px;
+    position: absolute; inset: 0;
+    background: linear-gradient(to bottom,
+      transparent 0%,
+      rgba(201,146,42,0.15) 30%,
+      rgba(201,146,42,0.15) 70%,
+      transparent 100%);
   }
 
-  .cover-title {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    color: var(--gold-light);
-  }
-  .cover-title h1 {
-    font-family: 'Playfair Display', serif;
-    font-style: italic;
-    font-size: 3.8rem;
-    font-weight: 400;
-    letter-spacing: 0.04em;
-    line-height: 1;
-    text-shadow: 0 2px 20px rgba(232,184,75,0.3);
-  }
-  .cover-title p {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 0.85rem;
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-    margin-top: 0.6rem;
-    opacity: 0.7;
-  }
-
-  /* corner ornaments */
-  .cover-ornament {
-    position: absolute;
-    width: 28px; height: 28px;
-    opacity: 0.45;
-  }
-  .cover-ornament.tl { top: 20px; left: 24px; }
-  .cover-ornament.tr { top: 20px; right: 20px; transform: scaleX(-1); }
-  .cover-ornament.bl { bottom: 20px; left: 24px; transform: scaleY(-1); }
-  .cover-ornament.br { bottom: 20px; right: 20px; transform: scale(-1); }
-
-  /* LEFT page */
-  .left-page {
-    position: absolute;
-    left: -300px; top: 10px; bottom: 10px; width: 290px;
-    background: linear-gradient(to right, #f0e6ca, #f7eed5);
-    border-radius: 4px 0 0 4px;
-    box-shadow: -10px 5px 30px rgba(0,0,0,0.2), inset -3px 0 8px rgba(0,0,0,0.08);
-    overflow: hidden;
-    padding: 28px 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    transform-origin: right center;
-    animation: pageBreath 6s ease-in-out infinite;
-  }
-
-  @keyframes pageBreath {
-    0%, 100% { transform: translateZ(3px) rotateY(3deg); }
-    50% { transform: translateZ(3px) rotateY(2deg); }
-  }
-
-  .page-rule { width: 100%; height: 1px; background: rgba(139,58,26,0.15); }
+  /* page content elements */
+  .page-rule { width: 100%; height: 1px; background: rgba(139,58,26,0.15); flex-shrink: 0; }
   .page-line {
-    width: 100%; height: 12px;
-    background: rgba(74,92,69,0.12);
-    border-radius: 1px;
+    width: 100%; height: 11px;
+    background: rgba(74,92,69,0.11);
+    border-radius: 1px; flex-shrink: 0;
   }
-  .page-line.short { width: 72%; }
-  .page-line.shorter { width: 45%; }
+  .page-line.short  { width: 70%; }
+  .page-line.shorter{ width: 42%; }
+  .page-line.tiny   { width: 28%; }
   .page-number-left {
     margin-top: auto;
     font-family: 'Cormorant Garamond', serif;
-    font-style: italic;
-    font-size: 0.75rem;
-    color: rgba(139,58,26,0.5);
-    text-align: left;
-  }
-
-  .right-page {
-    position: absolute;
-    right: -300px; top: 10px; bottom: 10px; width: 290px;
-    background: linear-gradient(to left, #f0e6ca, #f7eed5);
-    border-radius: 0 4px 4px 0;
-    box-shadow: 10px 5px 30px rgba(0,0,0,0.2), inset 3px 0 8px rgba(0,0,0,0.08);
-    overflow: hidden;
-    padding: 28px 24px;
-    display: flex; flex-direction: column; gap: 14px;
-    transform-origin: left center;
-    animation: pageBreathR 6s ease-in-out infinite;
-  }
-  @keyframes pageBreathR {
-    0%, 100% { transform: translateZ(3px) rotateY(-3deg); }
-    50% { transform: translateZ(3px) rotateY(-2deg); }
+    font-style: italic; font-size: 0.7rem;
+    color: rgba(139,58,26,0.45); text-align: left;
   }
   .page-number-right {
     margin-top: auto;
     font-family: 'Cormorant Garamond', serif;
-    font-style: italic;
-    font-size: 0.75rem;
-    color: rgba(139,58,26,0.5);
-    text-align: right;
+    font-style: italic; font-size: 0.7rem;
+    color: rgba(139,58,26,0.45); text-align: right;
+  }
+
+  /* ── FLIPPING PAGE (left side) ── */
+  .flip-wrapper-left {
+    position: absolute;
+    left: 0; top: 0;
+    width: 50%; height: 100%;
+    transform-style: preserve-3d;
+    transform-origin: right center;
+    transform: rotateY(0deg);
+    transition: transform 0.7s cubic-bezier(0.645, 0.045, 0.355, 1.000);
+    z-index: 5;
+    pointer-events: none;
+  }
+  /* hovering is handled entirely by JS — no CSS :hover flip */
+  .flip-wrapper-left,
+  .flip-wrapper-right {
+    transition: transform 0.5s cubic-bezier(0.645, 0.045, 0.355, 1.000);
+  }
+
+  .flip-front-left {
+    position: absolute; inset: 0;
+    backface-visibility: hidden;
+    background: linear-gradient(to right, #ede0c4, #f5edd8);
+    border-radius: 3px 0 0 3px;
+    overflow: hidden;
+    display: flex; flex-direction: column; gap: 13px;
+    padding: 32px 28px 24px;
+  }
+  /* curl shadow — shown via JS class */
+  .flip-front-left::after {
+    content: '';
+    position: absolute; top: 0; right: 0; bottom: 0; width: 40px;
+    background: linear-gradient(to left, rgba(0,0,0,0.12), transparent);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+
+  /* back of the flipping left page (shown when flipped) */
+  .flip-back-left {
+    position: absolute; inset: 0;
+    backface-visibility: hidden;
+    transform: rotateY(180deg);
+    background: linear-gradient(to left, #e8dbc2, #f0e6cc);
+    border-radius: 3px 0 0 3px;
+    overflow: hidden;
+    display: flex; flex-direction: column; gap: 13px;
+    padding: 32px 28px 24px;
+    opacity: 0.5;
+  }
+
+  /* ── FLIPPING PAGE (right side) ── */
+  .flip-wrapper-right {
+    position: absolute;
+    right: 0; top: 0;
+    width: 50%; height: 100%;
+    transform-style: preserve-3d;
+    transform-origin: left center;
+    transform: rotateY(0deg);
+    transition: transform 0.7s cubic-bezier(0.645, 0.045, 0.355, 1.000);
+    z-index: 5;
+    pointer-events: none;
+  }
+  /* flip-wrapper-right: JS controls transform inline */
+
+  .flip-front-right {
+    position: absolute; inset: 0;
+    backface-visibility: hidden;
+    background: linear-gradient(to left, #ede0c4, #f5edd8);
+    border-radius: 0 3px 3px 0;
+    overflow: hidden;
+    display: flex; flex-direction: column; gap: 13px;
+    padding: 32px 28px 24px;
+  }
+  .flip-front-right::after {
+    content: '';
+    position: absolute; top: 0; left: 0; bottom: 0; width: 40px;
+    background: linear-gradient(to right, rgba(0,0,0,0.12), transparent);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  /* shadow on curl edge — JS adds class */
+  .book-spread.hover-left .flip-front-left::after { opacity: 1; }
+  .book-spread.hover-right .flip-front-right::after { opacity: 1; }
+
+  .flip-back-right {
+    position: absolute; inset: 0;
+    backface-visibility: hidden;
+    transform: rotateY(-180deg);
+    background: linear-gradient(to right, #e8dbc2, #f0e6cc);
+    border-radius: 0 3px 3px 0;
+    overflow: hidden;
+    display: flex; flex-direction: column; gap: 13px;
+    padding: 32px 28px 24px;
+    opacity: 0.5;
+  }
+
+  /* ONLY flip the side being hovered */
+  /* (handled entirely via JS inline style) */
+
+  /* ── PAGE STACK EDGES ── */
+  .pages-edge-left {
+    position: absolute;
+    left: -7px; top: 4px; bottom: 4px; width: 7px;
+    background: repeating-linear-gradient(
+      to bottom, #f5edd8 0px, #f5edd8 2px, #ddd0b0 2px, #ddd0b0 3px
+    );
+    border-radius: 2px 0 0 2px;
+    transform: translateZ(-1px);
+  }
+  .pages-edge-right {
+    position: absolute;
+    right: -7px; top: 4px; bottom: 4px; width: 7px;
+    background: repeating-linear-gradient(
+      to bottom, #f5edd8 0px, #f5edd8 2px, #ddd0b0 2px, #ddd0b0 3px
+    );
+    border-radius: 0 2px 2px 0;
+    transform: translateZ(-1px);
+  }
+
+  /* ── BOOK BOARD (hard cover underneath) ── */
+  .book-board {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, #1e0f04, #2a1808);
+    border-radius: 3px;
+    transform: translateZ(-5px);
+    box-shadow:
+      0 30px 60px rgba(0,0,0,0.45),
+      0 10px 20px rgba(0,0,0,0.3),
+      -2px 0 8px rgba(0,0,0,0.4);
   }
 
   /* ink drops */
@@ -1104,76 +1158,110 @@
   <div class="bg-texture"></div>
   <div class="deco-lines"></div>
 
-  <div class="book-scene" id="bookScene" onclick="inkSplash(event, this)">
+  <div class="book-scene" id="bookScene">
     <div class="book" id="theBook">
-      <!-- left open page -->
-      <div class="left-page">
-        <div class="page-rule"></div>
-        <div class="page-line"></div>
-        <div class="page-line short"></div>
-        <div class="page-line"></div>
-        <div class="page-line shorter"></div>
-        <div class="page-line"></div>
-        <div class="page-line short"></div>
-        <div class="page-rule"></div>
-        <div class="page-line"></div>
-        <div class="page-line shorter"></div>
-        <div class="page-line"></div>
-        <div class="page-number-left">— 1 —</div>
-      </div>
-      <!-- right open page -->
-      <div class="right-page">
-        <div class="page-rule"></div>
-        <div class="page-line short"></div>
-        <div class="page-line"></div>
-        <div class="page-line shorter"></div>
-        <div class="page-line"></div>
-        <div class="page-rule"></div>
-        <div class="page-line"></div>
-        <div class="page-line short"></div>
-        <div class="page-line"></div>
-        <div class="page-line shorter"></div>
-        <div class="page-line"></div>
-        <div class="page-number-right">2 —</div>
-      </div>
-      <!-- spine -->
-      <div class="book-spine"></div>
-      <!-- pages stack -->
-      <div class="book-pages-stack"></div>
-      <!-- back cover -->
-      <div class="book-cover-back"></div>
-      <!-- front cover -->
-      <div class="book-cover">
-        <div class="cover-border"></div>
-        <!-- corner ornaments as SVG -->
-        <svg class="cover-ornament tl" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M2 2 L26 2 M2 2 L2 26" stroke="#c9922a" stroke-width="1"/>
-          <path d="M6 2 Q8 8 14 6 Q8 10 6 18 Q10 12 18 14 Q10 12 6 26" stroke="#c9922a" stroke-width="0.7" fill="none"/>
-        </svg>
-        <svg class="cover-ornament tr" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M2 2 L26 2 M2 2 L2 26" stroke="#c9922a" stroke-width="1"/>
-          <path d="M6 2 Q8 8 14 6 Q8 10 6 18 Q10 12 18 14 Q10 12 6 26" stroke="#c9922a" stroke-width="0.7" fill="none"/>
-        </svg>
-        <svg class="cover-ornament bl" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M2 2 L26 2 M2 2 L2 26" stroke="#c9922a" stroke-width="1"/>
-          <path d="M6 2 Q8 8 14 6 Q8 10 6 18 Q10 12 18 14 Q10 12 6 26" stroke="#c9922a" stroke-width="0.7" fill="none"/>
-        </svg>
-        <svg class="cover-ornament br" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M2 2 L26 2 M2 2 L2 26" stroke="#c9922a" stroke-width="1"/>
-          <path d="M6 2 Q8 8 14 6 Q8 10 6 18 Q10 12 18 14 Q10 12 6 26" stroke="#c9922a" stroke-width="0.7" fill="none"/>
-        </svg>
-        <div class="cover-title">
-          <h1>Folio</h1>
-          <p>A Living Journal</p>
+
+      <!-- hard board underneath everything -->
+      <div class="book-board"></div>
+
+      <!-- page stack edges -->
+      <div class="pages-edge-left"></div>
+      <div class="pages-edge-right"></div>
+
+      <!-- the spread: left half + right half + spine strip -->
+      <div class="book-spread" id="bookSpread"
+           onmousemove="handleBookHover(event, this)"
+           onmouseleave="clearBookHover(this)"
+           onclick="inkSplash(event, this)">
+
+        <!-- STATIC pages underneath (visible when flip pages lift) -->
+        <div class="page-base page-left-static">
+          <div class="page-rule"></div>
+          <div class="page-line shorter"></div>
+          <div class="page-line short"></div>
+          <div class="page-line"></div>
+          <div class="page-line tiny"></div>
+          <div class="page-rule"></div>
+          <div class="page-line short"></div>
+          <div class="page-line"></div>
+          <div class="page-number-left">— 3 —</div>
         </div>
-      </div>
-    </div>
+        <div class="page-base page-right-static">
+          <div class="page-rule"></div>
+          <div class="page-line"></div>
+          <div class="page-line short"></div>
+          <div class="page-line shorter"></div>
+          <div class="page-rule"></div>
+          <div class="page-line"></div>
+          <div class="page-line short"></div>
+          <div class="page-line tiny"></div>
+          <div class="page-number-right">4 —</div>
+        </div>
+
+        <!-- LEFT flipping page -->
+        <div class="flip-wrapper-left" id="flipLeft">
+          <div class="flip-front-left">
+            <div class="page-rule"></div>
+            <div class="page-line"></div>
+            <div class="page-line short"></div>
+            <div class="page-line"></div>
+            <div class="page-line shorter"></div>
+            <div class="page-line"></div>
+            <div class="page-line short"></div>
+            <div class="page-rule"></div>
+            <div class="page-line"></div>
+            <div class="page-line shorter"></div>
+            <div class="page-line"></div>
+            <div class="page-number-left">— 1 —</div>
+          </div>
+          <div class="flip-back-left">
+            <div class="page-rule"></div>
+            <div class="page-line short"></div>
+            <div class="page-line"></div>
+            <div class="page-line shorter"></div>
+            <div class="page-line"></div>
+            <div class="page-number-left">— 2 —</div>
+          </div>
+        </div>
+
+        <!-- RIGHT flipping page -->
+        <div class="flip-wrapper-right" id="flipRight">
+          <div class="flip-front-right">
+            <div class="page-rule"></div>
+            <div class="page-line short"></div>
+            <div class="page-line"></div>
+            <div class="page-line shorter"></div>
+            <div class="page-line"></div>
+            <div class="page-rule"></div>
+            <div class="page-line"></div>
+            <div class="page-line short"></div>
+            <div class="page-line"></div>
+            <div class="page-line shorter"></div>
+            <div class="page-line"></div>
+            <div class="page-number-right">2 —</div>
+          </div>
+          <div class="flip-back-right">
+            <div class="page-rule"></div>
+            <div class="page-line"></div>
+            <div class="page-line shorter"></div>
+            <div class="page-line short"></div>
+            <div class="page-line"></div>
+            <div class="page-number-right">3 —</div>
+          </div>
+        </div>
+
+        <!-- thin spine centre -->
+        <div class="book-center-spine"></div>
+
+      </div><!-- /book-spread -->
+    </div><!-- /book -->
+
     <!-- enter button -->
     <div class="enter-btn-wrap">
       <button class="enter-btn" onclick="showSection('inkroom')">Open the journal</button>
       <p class="enter-tagline">Where every day becomes a page</p>
     </div>
-  </div>
+  </div><!-- /book-scene -->
 </section>
 
 <!-- ═══════════════════════ INK ROOM ═══════════════════════ -->
@@ -1674,6 +1762,44 @@ function toggleTag(el) {
   if (active.length === 0) { populateIndex(entries); return; }
   const filtered = entries.filter(e => active.some(t => e.tags.includes(t)));
   populateIndex(filtered);
+}
+
+// ─── BOOK HOVER: left/right page flip ───
+function handleBookHover(e, spread) {
+  const rect = spread.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const midX = rect.width / 2;
+  const isLeft = x < midX;
+
+  // distance from the outer edge as a 0-1 ratio — curl more at the edge
+  let ratio;
+  if (isLeft) {
+    ratio = 1 - (x / midX);          // 0 at centre, 1 at far left
+  } else {
+    ratio = (x - midX) / midX;       // 0 at centre, 1 at far right
+  }
+  ratio = Math.min(Math.max(ratio, 0), 1);
+  const deg = ratio * 42;            // max 42° curl
+
+  if (isLeft) {
+    spread.classList.add('hover-left');
+    spread.classList.remove('hover-right');
+    document.getElementById('flipLeft').style.transform = `rotateY(${deg}deg)`;
+    document.getElementById('flipRight').style.transform = 'rotateY(0deg)';
+  } else {
+    spread.classList.add('hover-right');
+    spread.classList.remove('hover-left');
+    document.getElementById('flipRight').style.transform = `rotateY(-${deg}deg)`;
+    document.getElementById('flipLeft').style.transform = 'rotateY(0deg)';
+  }
+}
+
+function clearBookHover(spread) {
+  spread.classList.remove('hover-left', 'hover-right');
+  const fl = document.getElementById('flipLeft');
+  const fr = document.getElementById('flipRight');
+  if (fl) fl.style.transform = 'rotateY(0deg)';
+  if (fr) fr.style.transform = 'rotateY(0deg)';
 }
 
 // ─── INK SPLASH on book click ───
